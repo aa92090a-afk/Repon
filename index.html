@@ -1,2 +1,1158 @@
 <!DOCTYPE html>
-<html><body><h1>سلام از Repon 🎉</h1></body></html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ماشین بازی — رکورد زنی</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%; margin: 0;
+    background: radial-gradient(circle at 50% 30%, #12241a, #060a07 70%);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-family: Tahoma, system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #wrap {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(90,220,130,.18), 0 0 0 2px #1d3226;
+  }
+  canvas { display: block; touch-action: none; cursor: pointer; }
+  .overlay {
+    position: absolute; inset: 0;
+    background: rgba(4,10,6,.95);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 18px;
+    overflow-y: auto;
+    color: #e8f3ea;
+    direction: rtl;
+    scrollbar-width: thin;
+  }
+  .overlay.show { display: flex; }
+  h1 { font-size: 24px; color: #7cf08a; margin: 6px 0 4px; }
+  .subtitle { color: #8fb79a; font-size: 12px; margin-bottom: 10px; text-align: center; }
+  .section-title { align-self: stretch; font-size: 12px; color: #8fb79a; margin: 10px 0 6px; text-align: center; }
+  input {
+    width: 100%; max-width: 280px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 2px solid #2a4a33;
+    background: #0d1a11; color: #e8f3ea;
+    font-family: inherit; font-size: 16px;
+    text-align: center;
+    margin-bottom: 8px; outline: none;
+    transition: border-color .15s;
+  }
+  input:focus { border-color: #57d94a; }
+  .btn {
+    width: 100%; max-width: 280px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 2px solid #57d94a;
+    background: linear-gradient(180deg, #3f9d4d, #246b31);
+    color: #eaffea;
+    font-family: inherit; font-size: 15px; font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: filter .1s, transform .05s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.secondary { background: transparent; color: #8ef08e; border-color: #2a4a33; }
+  .btn.link {
+    background: transparent; border-color: transparent;
+    color: #8fb79a; font-size: 13px;
+    padding: 8px; margin-top: 2px;
+  }
+  .btn.link:hover { color: #8ef08e; }
+  .btn:hover:not(:disabled) { filter: brightness(1.12); }
+  .user-list {
+    width: 100%; max-width: 280px;
+    max-height: 120px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .user-item {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #0d1a11;
+    border: 1px solid #2a4a33;
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px;
+    transition: border-color .1s;
+  }
+  .user-item:hover { border-color: #57d94a; }
+  .user-item.selected { border-color: #57d94a; background: #14281b; }
+  .user-item .best { color: #f2e46b; font-size: 12px; }
+  .msg {
+    font-size: 13px; color: #ff8070;
+    min-height: 18px; margin: 4px 0 8px; text-align: center;
+  }
+  .msg.ok { color: #8ef08e; }
+  .actions { display: flex; gap: 8px; width: 100%; max-width: 280px; margin-top: 4px; }
+  .actions .btn { margin-bottom: 0; flex: 1; }
+  .hint { font-size: 11px; color: #4e6b56; text-align: center; margin-top: 10px; max-width: 280px; line-height: 1.7; }
+  .big-score { font-size: 42px; color: #8ef08e; font-weight: bold; margin: 4px 0; }
+  .record-line { font-size: 14px; color: #f2e46b; margin: 2px 0 12px; }
+  .new-record { color: #ffdd55; font-size: 14px; font-weight: bold; margin-bottom: 6px; animation: pulse .8s infinite alternate; }
+  @keyframes pulse { from { opacity: .6; } to { opacity: 1; } }
+  .empty-note { text-align: center; color: #4e6b56; font-size: 13px; padding: 8px; }
+
+  /* --- صفحه مقایسه --- */
+  #compareBody {
+    width: 100%; max-width: 320px;
+    display: flex; flex-direction: column;
+    flex: 1;
+  }
+  .compare-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .summary-card {
+    background: #0d1a11;
+    border: 1px solid #2a4a33;
+    border-radius: 8px;
+    padding: 6px 4px;
+    text-align: center;
+    font-size: 10px;
+    color: #8fb79a;
+  }
+  .summary-card b { display: block; font-size: 16px; color: #8ef08e; margin-top: 2px; }
+  .compare-table {
+    width: 100%;
+    background: #0d1a11;
+    border-radius: 8px;
+    border: 1px solid #2a4a33;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 56px 40px 56px;
+    padding: 6px 8px;
+    font-size: 12px;
+    border-bottom: 1px solid #1a2a1f;
+    align-items: center;
+    color: #cfe8d6;
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row.header {
+    background: #14281b;
+    color: #8fb79a;
+    font-size: 10px;
+    font-weight: bold;
+  }
+  .compare-row.me { background: rgba(87,217,74,.10); }
+  .compare-row .col-rank { color: #6f9a7c; text-align: center; }
+  .compare-row .col-best { color: #f2e46b; text-align: center; font-weight: bold; }
+  .compare-row .col-games { text-align: center; color: #8fb79a; }
+  .compare-row .col-total { text-align: center; color: #8ef08e; font-size: 11px; }
+  .compare-row .col-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <!-- ========== صفحه ورود ========== -->
+  <div id="loginScreen" class="overlay show">
+    <h1>🚗 ماشین بازی</h1>
+    <div class="subtitle">با نام کاربری و رمز خود وارد شوید</div>
+
+    <div class="section-title">— کاربران موجود —</div>
+    <div id="userList" class="user-list"></div>
+
+    <input id="usernameInput" type="text" placeholder="نام کاربری" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <input id="passwordInput" type="password" placeholder="رمز" maxlength="32" autocomplete="off">
+    <div id="loginMsg" class="msg"></div>
+
+    <div class="actions">
+      <button class="btn" id="loginBtn">ورود</button>
+      <button class="btn secondary" id="registerBtn">ثبت‌نام</button>
+    </div>
+    <button class="btn link" id="showCompareBtn">📊 مقایسه امتیازها و گزارش</button>
+
+    <div class="hint">
+      برای افزودن کاربر: نام و رمز دلخواه را بنویسید و «ثبت‌نام» را بزنید.<br>
+      برای ورود: روی نام کاربر کلیک کنید، رمز را بزنید و «ورود».
+    </div>
+  </div>
+
+  <!-- ========== صفحه پایان بازی ========== -->
+  <div id="gameOverScreen" class="overlay">
+    <h1>بازی تمام شد</h1>
+    <div id="finalName" class="subtitle"></div>
+    <div id="finalScore" class="big-score">0</div>
+    <div id="finalRecord" class="record-line"></div>
+    <div id="newRecordNote" class="new-record" style="display:none">🎉 رکورد جدید!</div>
+
+    <div class="section-title">— برترین رکوردها —</div>
+    <div id="overTop" class="user-list" style="max-height:150px"></div>
+
+    <div class="actions">
+      <button class="btn" id="retryBtn">تلاش دوباره</button>
+      <button class="btn secondary" id="backBtn">تغییر کاربر</button>
+    </div>
+    <button class="btn link" id="overCompareBtn">📊 مقایسه امتیازها و گزارش</button>
+  </div>
+
+  <!-- ========== صفحه مقایسه ========== -->
+  <div id="compareScreen" class="overlay">
+    <h1>📊 گزارش و مقایسه</h1>
+    <div class="subtitle">امتیاز و آمار همه کاربران</div>
+    <div id="compareBody"></div>
+    <button class="btn" id="compareBackBtn" style="margin-top:auto">بازگشت</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ============================================================
+     ذخیره‌سازی محلی
+     ============================================================ */
+  const LS_USERS = 'carGame_users_v4';
+
+  function loadUsers() {
+    try {
+      const raw = localStorage.getItem(LS_USERS);
+      if (!raw) return {};
+      const obj = JSON.parse(raw);
+      return (obj && typeof obj === 'object') ? obj : {};
+    } catch (e) { return {}; }
+  }
+  function saveUsers(u) {
+    try { localStorage.setItem(LS_USERS, JSON.stringify(u)); } catch (e) {}
+  }
+  function hashPassword(pw) {
+    let h = 5381;
+    for (let i = 0; i < pw.length; i++) {
+      h = ((h << 5) + h) + pw.charCodeAt(i);
+      h |= 0;
+    }
+    return 'h' + (h >>> 0).toString(36);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  let users = loadUsers();
+
+  // مهاجرت داده‌های قدیمی
+  (function migrate() {
+    let changed = false;
+    for (const name in users) {
+      const u = users[name];
+      if (typeof u.games !== 'number') {
+        u.games = (u.best || 0) > 0 ? 1 : 0;
+        u.totalScore = u.best || 0;
+        u.lastPlayed = u.created || Date.now();
+        changed = true;
+      }
+    }
+    if (changed) saveUsers(users);
+  })();
+
+  let currentUser = null;
+
+  /* ============================================================
+     عناصر DOM
+     ============================================================ */
+  const canvas         = document.getElementById('game');
+  const ctx            = canvas.getContext('2d');
+  const loginScreen    = document.getElementById('loginScreen');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const compareScreen  = document.getElementById('compareScreen');
+  const userListEl     = document.getElementById('userList');
+  const usernameInput  = document.getElementById('usernameInput');
+  const passwordInput  = document.getElementById('passwordInput');
+  const loginMsg       = document.getElementById('loginMsg');
+  const loginBtn       = document.getElementById('loginBtn');
+  const registerBtn    = document.getElementById('registerBtn');
+  const showCompareBtn = document.getElementById('showCompareBtn');
+  const finalNameEl    = document.getElementById('finalName');
+  const finalScoreEl   = document.getElementById('finalScore');
+  const finalRecordEl  = document.getElementById('finalRecord');
+  const newRecordNote  = document.getElementById('newRecordNote');
+  const overTopEl      = document.getElementById('overTop');
+  const retryBtn       = document.getElementById('retryBtn');
+  const backBtn        = document.getElementById('backBtn');
+  const overCompareBtn = document.getElementById('overCompareBtn');
+  const compareBodyEl  = document.getElementById('compareBody');
+  const compareBackBtn = document.getElementById('compareBackBtn');
+
+  /* ============================================================
+     تنظیمات بوم
+     ============================================================ */
+  const W = 360, H = 640;
+  const ROAD_X = 48, ROAD_W = 264;
+  const LANES = 3, LANE_W = ROAD_W / LANES;
+  const laneCenter = i => ROAD_X + LANE_W * (i + 0.5);
+
+  let dpr = 1;
+  function fit() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const s = Math.min((window.innerWidth * 0.95) / W, (window.innerHeight * 0.95) / H);
+    canvas.style.width  = Math.round(W * s) + 'px';
+    canvas.style.height = Math.round(H * s) + 'px';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+
+  /* ============================================================
+     وضعیت بازی
+     ============================================================ */
+  let state = 'menu';          // menu | playing | over | compare
+  let compareReturnTo = 'menu';
+  let score = 0;
+  let obstacles = [];
+  let spawnTimer = 1.0;
+  let roadOffset = 0;
+  let distance = 0;
+  let shake = 0;
+  let flashMsg = '';
+  let flashTime = 0;
+  let busy = false;
+
+  // حرکت لاین‌محور
+  let playerLane = 1;
+  let playerX = laneCenter(1);
+  let playerTargetX = laneCenter(1);
+  let laneFlash = 0;
+  let laneFlashFrom = 0;
+  let playerY = H - 110;
+  const playerW = 42, playerH = 72;
+
+  const btnLeft  = { x: 18,     y: H - 110, w: 78, h: 90, active: false, id: -1 };
+  const btnRight = { x: W - 96, y: H - 110, w: 78, h: 90, active: false, id: -1 };
+  const btnExitRect = { x: 8, y: 12, w: 54, h: 34 };
+
+  const C = {
+    grass: '#0c1710', grass2: '#0f1f14', road: '#242a25',
+    edge: '#cdd6cd', dash: '#e6ede6',
+    playerBody: '#57d94a', playerGlass: '#dfffd6'
+  };
+  const ENEMY_COLORS = [
+    { body: '#e9503f', glass: '#ffd9d2' },
+    { body: '#f0b73e', glass: '#fff0cc' },
+    { body: '#4f86e8', glass: '#d5e5ff' },
+    { body: '#a468e0', glass: '#ecd9ff' },
+    { body: '#e87bb4', glass: '#ffe0f0' }
+  ];
+
+  /* ============================================================
+     صدا
+     ============================================================ */
+  let actx = null;
+  function beep(freq, dur, type, vol) {
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      const o = actx.createOscillator();
+      const g = actx.createGain();
+      o.type = type || 'square';
+      o.frequency.value = freq;
+      g.gain.value = vol || 0.05;
+      o.connect(g); g.connect(actx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.stop(actx.currentTime + dur + 0.02);
+    } catch (e) {}
+  }
+
+  /* ============================================================
+     فرمان لاین‌محور + صدا + بازخورد بصری
+     ============================================================ */
+  function steer(dir) {
+    if (state !== 'playing') return;
+    const target = playerLane + dir;
+    if (target < 0 || target >= LANES) {
+      // ضربه‌ی دیوار — صدا و لرزش کوچک
+      beep(130, 0.06, 'square', 0.03);
+      shake = 3;
+      return;
+    }
+    laneFlashFrom = playerX;
+    playerLane = target;
+    playerTargetX = laneCenter(target);
+    laneFlash = 0.22;
+    beep(620, 0.045, 'sine', 0.035);
+  }
+
+  /* ============================================================
+     ورودی صفحه‌کلید
+     ============================================================ */
+  const keys = Object.create(null);
+  let prevLeftKey = false, prevRightKey = false;
+
+  window.addEventListener('keydown', e => {
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].indexOf(e.key) !== -1) e.preventDefault();
+    keys[e.key] = true;
+
+    if (state === 'menu') {
+      if (e.key === 'Enter') {
+        const ae = document.activeElement;
+        if (ae === passwordInput || ae === usernameInput) {
+          e.preventDefault();
+          const name = usernameInput.value.trim();
+          if (name && users[name]) doLogin(); else doRegister();
+        }
+      }
+      return;
+    }
+    if (state === 'over') {
+      if (e.key === ' ' || e.key === 'Enter') startPlaying();
+    }
+  });
+  window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+  /* ============================================================
+     ورودی لمسی / موس
+     ============================================================ */
+  let swipeStart = null;
+
+  function canvasPos(clientX, clientY) {
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - r.left) * (W / r.width),
+      y: (clientY - r.top)  * (H / r.height)
+    };
+  }
+  function inRect(r, p) {
+    return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    if (state !== 'playing') return;
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+    const p = canvasPos(e.clientX, e.clientY);
+
+    // دکمه خروج (بالا-چپ)
+    if (inRect(btnExitRect, p)) {
+      exitToMenu();
+      return;
+    }
+    // دکمه‌های فرمان
+    if (inRect(btnLeft, p)) {
+      btnLeft.active = true; btnLeft.id = e.pointerId;
+      steer(-1);
+      return;
+    }
+    if (inRect(btnRight, p)) {
+      btnRight.active = true; btnRight.id = e.pointerId;
+      steer(1);
+      return;
+    }
+    // شروع سوایپ
+    swipeStart = { x: p.x, y: p.y, id: e.pointerId };
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    if (btnLeft.id === e.pointerId)  { btnLeft.active = false;  btnLeft.id = -1; }
+    if (btnRight.id === e.pointerId) { btnRight.active = false; btnRight.id = -1; }
+
+    if (swipeStart && swipeStart.id === e.pointerId) {
+      const p = canvasPos(e.clientX, e.clientY);
+      const dx = p.x - swipeStart.x;
+      if (Math.abs(dx) > 35) steer(dx < 0 ? -1 : 1);
+      swipeStart = null;
+    }
+  });
+  canvas.addEventListener('pointercancel', e => {
+    if (btnLeft.id === e.pointerId)  { btnLeft.active = false;  btnLeft.id = -1; }
+    if (btnRight.id === e.pointerId) { btnRight.active = false; btnRight.id = -1; }
+    swipeStart = null;
+  });
+
+  /* ============================================================
+     کاربران
+     ============================================================ */
+  function setMsg(text, ok) {
+    loginMsg.textContent = text;
+    loginMsg.className = 'msg' + (ok ? ' ok' : '');
+  }
+
+  function refreshUserList() {
+    userListEl.innerHTML = '';
+    const names = Object.keys(users).sort();
+    if (names.length === 0) {
+      const d = document.createElement('div');
+      d.className = 'empty-note';
+      d.textContent = 'هنوز کاربری ثبت نشده — اولین کاربر را بسازید';
+      userListEl.appendChild(d);
+      return;
+    }
+    const selected = usernameInput.value.trim();
+    for (const name of names) {
+      const item = document.createElement('div');
+      item.className = 'user-item' + (name === selected ? ' selected' : '');
+      const ns = document.createElement('span');
+      ns.textContent = name;
+      const bs = document.createElement('span');
+      bs.className = 'best';
+      bs.textContent = (users[name].best || 0) + ' 🏆';
+      item.appendChild(ns); item.appendChild(bs);
+      item.addEventListener('click', () => {
+        usernameInput.value = name;
+        passwordInput.value = '';
+        passwordInput.focus();
+        setMsg('');
+        refreshUserList();
+      });
+      userListEl.appendChild(item);
+    }
+  }
+
+  function doLogin() {
+    if (busy) return;
+    const name = usernameInput.value.trim();
+    const pw = passwordInput.value;
+    if (!name) { setMsg('نام کاربری را وارد کنید'); return; }
+    if (!pw)   { setMsg('رمز را وارد کنید'); return; }
+    if (!users[name]) { setMsg('کاربری با این نام نیست — «ثبت‌نام» را بزنید'); return; }
+    if (users[name].password !== hashPassword(pw)) { setMsg('رمز اشتباه است'); return; }
+    currentUser = name;
+    setMsg('خوش آمدید، ' + name + '!', true);
+    busy = true; loginBtn.disabled = registerBtn.disabled = true;
+    beep(700, 0.09, 'square', 0.05);
+    setTimeout(() => {
+      busy = false; loginBtn.disabled = registerBtn.disabled = false;
+      startPlaying();
+    }, 250);
+  }
+
+  function doRegister() {
+    if (busy) return;
+    const name = usernameInput.value.trim();
+    const pw = passwordInput.value;
+    if (!name)          { setMsg('نام کاربری را وارد کنید'); return; }
+    if (name.length < 2){ setMsg('نام کاربری حداقل ۲ حرف'); return; }
+    if (!pw)            { setMsg('رمز را وارد کنید'); return; }
+    if (pw.length < 2)  { setMsg('رمز حداقل ۲ حرف'); return; }
+    if (users[name])    { setMsg('این نام قبلاً ثبت شده — «ورود» را بزنید'); return; }
+
+    users[name] = {
+      password: hashPassword(pw),
+      best: 0, games: 0, totalScore: 0,
+      created: Date.now(), lastPlayed: Date.now()
+    };
+    saveUsers(users);
+    refreshUserList();
+    currentUser = name;
+    setMsg('ثبت‌نام موفق! ورود...', true);
+    busy = true; loginBtn.disabled = registerBtn.disabled = true;
+    beep(820, 0.09, 'square', 0.05);
+    setTimeout(() => {
+      busy = false; loginBtn.disabled = registerBtn.disabled = false;
+      startPlaying();
+    }, 300);
+  }
+
+  loginBtn.addEventListener('click', doLogin);
+  registerBtn.addEventListener('click', doRegister);
+  usernameInput.addEventListener('input', refreshUserList);
+  passwordInput.addEventListener('input', () => setMsg(''));
+
+  /* ============================================================
+     جریان بازی
+     ============================================================ */
+  function showLogin() {
+    state = 'menu';
+    currentUser = null;
+    busy = false;
+    loginBtn.disabled = registerBtn.disabled = false;
+    loginScreen.classList.add('show');
+    gameOverScreen.classList.remove('show');
+    compareScreen.classList.remove('show');
+    usernameInput.value = '';
+    passwordInput.value = '';
+    setMsg('');
+    refreshUserList();
+    resetGame();
+    setTimeout(() => usernameInput.focus(), 100);
+  }
+
+  function startPlaying() {
+    state = 'playing';
+    loginScreen.classList.remove('show');
+    gameOverScreen.classList.remove('show');
+    compareScreen.classList.remove('show');
+    resetGame();
+    flashMsg = 'موفق باشی، ' + currentUser + '!';
+    flashTime = 1.6;
+    beep(680, 0.08, 'square', 0.05);
+  }
+
+  function resetGame() {
+    playerLane = 1;
+    playerX = laneCenter(1);
+    playerTargetX = laneCenter(1);
+    laneFlash = 0;
+    laneFlashFrom = playerX;
+    playerY = H - 110;
+    obstacles = [];
+    spawnTimer = 1.0;
+    score = 0;
+    distance = 0;
+    shake = 0;
+    swipeStart = null;
+    btnLeft.active = false;  btnRight.active = false;
+    btnLeft.id = -1;         btnRight.id = -1;
+    prevLeftKey = prevRightKey = false;
+  }
+
+  function recordGame(sc) {
+    if (!currentUser || !users[currentUser]) return false;
+    const u = users[currentUser];
+    u.games = (u.games || 0) + 1;
+    u.totalScore = (u.totalScore || 0) + sc;
+    u.lastPlayed = Date.now();
+    let isRecord = false;
+    if (sc > (u.best || 0)) { u.best = sc; isRecord = true; }
+    saveUsers(users);
+    return isRecord;
+  }
+
+  function gameOver() {
+    state = 'over';
+    shake = 16;
+    const sc = Math.floor(score);
+    const isRecord = recordGame(sc);
+    beep(160, 0.30, 'sawtooth', 0.08);
+    setTimeout(() => beep(90, 0.40, 'sawtooth', 0.07), 130);
+    if (isRecord) {
+      setTimeout(() => { beep(780, 0.10, 'square', 0.06);
+        setTimeout(() => beep(1040, 0.14, 'square', 0.06), 110); }, 320);
+    }
+    setTimeout(() => showGameOver(sc, isRecord), 420);
+  }
+
+  function exitToMenu() {
+    // خروج حین بازی: ثبت امتیاز فعلی و بازگشت به منو
+    const sc = Math.floor(score);
+    if (sc > 0) recordGame(sc);
+    beep(400, 0.10, 'sine', 0.04);
+    showLogin();
+  }
+
+  function showGameOver(sc, isRecord) {
+    gameOverScreen.classList.add('show');
+
+    finalNameEl.textContent = 'کاربر: ' + currentUser;
+    finalScoreEl.textContent = String(sc);
+    finalRecordEl.textContent = 'رکورد شما: ' + (users[currentUser] ? (users[currentUser].best || 0) : 0);
+    newRecordNote.style.display = isRecord ? 'block' : 'none';
+
+    overTopEl.innerHTML = '';
+    const items = Object.keys(users)
+      .map(n => ({ name: n, best: users[n].best || 0 }))
+      .sort((a, b) => b.best - a.best)
+      .slice(0, 5);
+    if (items.length === 0) {
+      const d = document.createElement('div');
+      d.className = 'empty-note';
+      d.textContent = 'رکوردی ثبت نشده';
+      overTopEl.appendChild(d);
+    } else {
+      items.forEach((it, i) => {
+        const row = document.createElement('div');
+        row.className = 'user-item';
+        if (it.name === currentUser) row.style.borderColor = '#57d94a';
+        const ns = document.createElement('span');
+        ns.textContent = (i + 1) + '. ' + it.name + (it.name === currentUser ? ' (شما)' : '');
+        const bs = document.createElement('span');
+        bs.className = 'best';
+        bs.textContent = it.best + ' 🏆';
+        row.appendChild(ns); row.appendChild(bs);
+        overTopEl.appendChild(row);
+      });
+    }
+  }
+
+  retryBtn.addEventListener('click', () => {
+    if (currentUser && users[currentUser]) startPlaying();
+  });
+  backBtn.addEventListener('click', showLogin);
+
+  /* ============================================================
+     صفحه مقایسه و گزارش
+     ============================================================ */
+  function showCompare(returnTo) {
+    compareReturnTo = returnTo || 'menu';
+    state = 'compare';
+    loginScreen.classList.remove('show');
+    gameOverScreen.classList.remove('show');
+    compareScreen.classList.add('show');
+    renderCompare();
+  }
+  function hideCompare() {
+    compareScreen.classList.remove('show');
+    if (compareReturnTo === 'over' && currentUser) {
+      state = 'over';
+      gameOverScreen.classList.add('show');
+    } else {
+      state = 'menu';
+      loginScreen.classList.add('show');
+      refreshUserList();
+    }
+  }
+
+  function renderCompare() {
+    compareBodyEl.innerHTML = '';
+
+    const entries = Object.keys(users).map(name => ({
+      name,
+      best: users[name].best || 0,
+      games: users[name].games || 0,
+      total: users[name].totalScore || 0,
+      last: users[name].lastPlayed || 0
+    })).sort((a, b) => b.best - a.best);
+
+    if (entries.length === 0) {
+      const d = document.createElement('div');
+      d.className = 'empty-note';
+      d.textContent = 'هنوز کاربری ثبت نشده است';
+      compareBodyEl.appendChild(d);
+      return;
+    }
+
+    const totalGames = entries.reduce((s, e) => s + e.games, 0);
+    const avgScore = totalGames > 0
+      ? Math.round(entries.reduce((s, e) => s + e.total, 0) / totalGames)
+      : 0;
+
+    // خلاصه
+    const summary = document.createElement('div');
+    summary.className = 'compare-summary';
+    summary.innerHTML = `
+      <div class="summary-card">کاربران<b>${entries.length}</b></div>
+      <div class="summary-card">کل بازی‌ها<b>${totalGames}</b></div>
+      <div class="summary-card">میانگین<b>${avgScore}</b></div>
+    `;
+    compareBodyEl.appendChild(summary);
+
+    // جدول
+    const table = document.createElement('div');
+    table.className = 'compare-table';
+
+    const header = document.createElement('div');
+    header.className = 'compare-row header';
+    header.innerHTML = `
+      <span class="col-rank">#</span>
+      <span class="col-name">کاربر</span>
+      <span class="col-best">رکورد</span>
+      <span class="col-games">بازی</span>
+      <span class="col-total">جمع</span>
+    `;
+    table.appendChild(header);
+
+    entries.forEach((e, i) => {
+      const row = document.createElement('div');
+      row.className = 'compare-row' + (e.name === currentUser ? ' me' : '');
+      row.innerHTML = `
+        <span class="col-rank">${i + 1}</span>
+        <span class="col-name">${escapeHtml(e.name)}</span>
+        <span class="col-best">${e.best}</span>
+        <span class="col-games">${e.games}</span>
+        <span class="col-total">${e.total}</span>
+      `;
+      table.appendChild(row);
+    });
+
+    compareBodyEl.appendChild(table);
+  }
+
+  showCompareBtn.addEventListener('click', () => showCompare('menu'));
+  overCompareBtn.addEventListener('click', () => showCompare('over'));
+  compareBackBtn.addEventListener('click', hideCompare);
+
+  /* ============================================================
+     سختی تطبیقی — ملایم و بی‌نهایت
+     ============================================================ */
+  function difficulty() {
+    const d = distance;
+    // سرعت: 220 → 320 (اشباع نرم)
+    const speed = 220 + 100 * (1 - Math.exp(-d / 3000));
+    // بازه تولید: 1.15 → 0.55 ثانیه (هرگز کمتر)
+    const spawn = 0.55 + 0.60 * Math.exp(-d / 2400);
+    // سهم ماشین: 0.40 → 0.60
+    const carChance = 0.40 + 0.20 * (1 - Math.exp(-d / 4500));
+    return { speed, spawn, carChance };
+  }
+
+  function spawnObstacle(diff) {
+    // حداکثر ۲ مانع در ناحیه بالای صفحه (تا همیشه یک لاین آزاد بماند)
+    const topCount = obstacles.filter(o => o.y < 250).length;
+    if (topCount >= 2) return;
+
+    const lanes = [0, 1, 2].sort(() => Math.random() - 0.5);
+    for (const lane of lanes) {
+      const x = laneCenter(lane);
+      const blocked = obstacles.some(o => Math.abs(o.x - x) < 26 && o.y < 210);
+      if (blocked) continue;
+
+      if (Math.random() < diff.carChance) {
+        const c = ENEMY_COLORS[(Math.random() * ENEMY_COLORS.length) | 0];
+        obstacles.push({
+          type: 'car', x, y: -100, w: 42, h: 72,
+          body: c.body, glass: c.glass, hitW: 30, hitH: 58
+        });
+      } else if (Math.random() < 0.5) {
+        obstacles.push({
+          type: 'rock', x, y: -70, w: 40, h: 40,
+          r: 18 + Math.random() * 6, hitW: 34, hitH: 34
+        });
+      } else {
+        obstacles.push({
+          type: 'tree', x, y: -80, w: 46, h: 56,
+          hitW: 30, hitH: 40
+        });
+      }
+      return;
+    }
+  }
+
+  /* ============================================================
+     به‌روزرسانی
+     ============================================================ */
+  function update(dt) {
+    if (flashTime > 0) flashTime = Math.max(0, flashTime - dt);
+    if (shake > 0) shake = Math.max(0, shake - dt * 60);
+    if (laneFlash > 0) laneFlash = Math.max(0, laneFlash - dt);
+
+    if (state !== 'playing') {
+      roadOffset += 90 * dt;
+      return;
+    }
+
+    // --- فرمان کیبورد (لبه‌ی فشار) ---
+    const curLeft = !!(keys.ArrowLeft || keys.a || keys.A);
+    const curRight = !!(keys.ArrowRight || keys.d || keys.D);
+    if (curLeft && !prevLeftKey) steer(-1);
+    if (curRight && !prevRightKey) steer(1);
+    prevLeftKey = curLeft;
+    prevRightKey = curRight;
+
+    // --- حرکت نرم ماشین به مرکز لاین ---
+    const dx = playerTargetX - playerX;
+    const step = Math.min(Math.abs(dx), 1100 * dt);
+    if (step > 0.5) playerX += Math.sign(dx) * step;
+    else playerX = playerTargetX;
+
+    // --- سرعت/سختی ---
+    const diff = difficulty();
+    const roadSpeed = diff.speed;
+
+    roadOffset += roadSpeed * dt;
+    distance += roadSpeed * dt;
+    score = distance;
+
+    // --- تولید مانع ---
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnObstacle(diff);
+      spawnTimer = diff.spawn * (0.85 + Math.random() * 0.35);
+    }
+
+    // --- حرکت موانع ---
+    const obsSpeed = roadSpeed * 0.85;
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const o = obstacles[i];
+      o.y += obsSpeed * dt;
+      if (o.y - o.h > H + 60) obstacles.splice(i, 1);
+    }
+
+    // --- برخورد ---
+    for (let i = 0; i < obstacles.length; i++) {
+      const o = obstacles[i];
+      if (Math.abs(o.x - playerX) < (o.hitW + playerW) / 2 - 6 &&
+          Math.abs(o.y - playerY) < (o.hitH + playerH) / 2 - 10) {
+        gameOver();
+        return;
+      }
+    }
+  }
+
+  /* ============================================================
+     رسم
+     ============================================================ */
+  function rr(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y,     x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x,     y + h, r);
+    ctx.arcTo(x,     y + h, x,     y,     r);
+    ctx.arcTo(x,     y,     x + w, y,     r);
+    ctx.closePath();
+  }
+
+  function drawCar(cx, cy, w, h, body, glass, flip) {
+    ctx.save();
+    if (flip) { ctx.translate(0, cy * 2); ctx.scale(1, -1); }
+    const x = cx - w / 2, y = cy - h / 2;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    rr(x + 2, y + 6, w, h, 10); ctx.fill();
+
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(x - 4,     y + h * 0.15, 7, h * 0.22);
+    ctx.fillRect(x + w - 3, y + h * 0.15, 7, h * 0.22);
+    ctx.fillRect(x - 4,     y + h * 0.63, 7, h * 0.22);
+    ctx.fillRect(x + w - 3, y + h * 0.63, 7, h * 0.22);
+
+    ctx.fillStyle = body;
+    rr(x, y, w, h, 10); ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    rr(x + 5, y + h * 0.40, w - 10, h * 0.24, 6); ctx.fill();
+
+    ctx.fillStyle = glass;
+    rr(x + 7, y + h * 0.12, w - 14, h * 0.22, 6); ctx.fill();
+    rr(x + 7, y + h * 0.72, w - 14, h * 0.16, 5); ctx.fill();
+
+    ctx.fillStyle = '#fff8b0';
+    ctx.fillRect(x + 4,      y + 2, 9, 4);
+    ctx.fillRect(x + w - 13, y + 2, 9, 4);
+
+    ctx.restore();
+  }
+
+  function drawRock(cx, cy, r) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath(); ctx.ellipse(cx + 3, cy + 6, r * 0.95, r * 0.7, 0, 0, 7); ctx.fill();
+    const g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.15, cx, cy, r);
+    g.addColorStop(0, '#b9b9b0'); g.addColorStop(1, '#5d615c');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    const pts = 8;
+    for (let i = 0; i < pts; i++) {
+      const a = (i / pts) * Math.PI * 2 - Math.PI / 2;
+      const rad = r * (0.85 + 0.15 * Math.sin(i * 2.3));
+      const px = cx + Math.cos(a) * rad;
+      const py = cy + Math.sin(a) * rad * 0.9;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath(); ctx.ellipse(cx - r * 0.3, cy - r * 0.35, r * 0.3, r * 0.2, -0.6, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTree(cx, cy) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath(); ctx.ellipse(cx + 3, cy + 22, 22, 9, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#6b4a2a';
+    ctx.fillRect(cx - 4, cy + 2, 8, 22);
+    const g = ctx.createRadialGradient(cx - 6, cy - 14, 4, cx, cy - 6, 30);
+    g.addColorStop(0, '#3ea84a'); g.addColorStop(1, '#175a24');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx - 10, cy - 6, 15, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 10, cy - 6, 15, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,      cy - 20, 17, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.beginPath(); ctx.arc(cx - 8, cy - 22, 6, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawScene() {
+    ctx.fillStyle = C.grass;
+    ctx.fillRect(-40, -40, W + 80, H + 80);
+
+    ctx.fillStyle = C.grass2;
+    const gp = 120, goff = (roadOffset * 0.6) % gp;
+    for (let y = -gp + goff; y < H + gp; y += gp) {
+      ctx.fillRect(-40, y, ROAD_X + 40, 58);
+      ctx.fillRect(ROAD_X + ROAD_W, y + 60, W - ROAD_X - ROAD_W + 40, 58);
+    }
+
+    ctx.fillStyle = C.road;
+    ctx.fillRect(ROAD_X, -40, ROAD_W, H + 80);
+
+    ctx.fillStyle = C.edge;
+    ctx.fillRect(ROAD_X + 3, -40, 4, H + 80);
+    ctx.fillRect(ROAD_X + ROAD_W - 7, -40, 4, H + 80);
+
+    ctx.fillStyle = C.dash;
+    const period = 70, dashH = 38;
+    const off = roadOffset % period;
+    for (let i = 1; i < LANES; i++) {
+      const x = ROAD_X + LANE_W * i;
+      for (let y = -period + off; y < H + period; y += period) {
+        ctx.fillRect(x - 3, y, 6, dashH);
+      }
+    }
+
+    if (state === 'playing' || state === 'over') {
+      // موانع
+      for (let i = 0; i < obstacles.length; i++) {
+        const o = obstacles[i];
+        if (o.type === 'car')  drawCar(o.x, o.y, o.w, o.h, o.body, o.glass, true);
+        else if (o.type === 'rock') drawRock(o.x, o.y, o.r);
+        else drawTree(o.x, o.y);
+      }
+
+      // بازخورد بصری تغییر لاین (بهینه: یک مستطیل محو)
+      if (laneFlash > 0) {
+        const a = laneFlash / 0.22;
+        const minX = Math.min(laneFlashFrom, playerX) - 14;
+        const maxX = Math.max(laneFlashFrom, playerX) + 14;
+        ctx.globalAlpha = a * 0.30;
+        ctx.fillStyle = '#8ef08e';
+        ctx.fillRect(minX, playerY - 22, maxX - minX, 44);
+        ctx.globalAlpha = 1;
+      }
+
+      drawCar(playerX, playerY, playerW, playerH, C.playerBody, C.playerGlass, false);
+    }
+  }
+
+  function drawButton(b, dir) {
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    const press = b.active ? 2 : 0;
+
+    ctx.save();
+    ctx.globalAlpha = b.active ? 0.95 : 0.62;
+
+    const g = ctx.createLinearGradient(0, b.y, 0, b.y + b.h);
+    g.addColorStop(0, '#28442f'); g.addColorStop(1, '#15281b');
+    ctx.fillStyle = g;
+    rr(b.x, b.y + press, b.w, b.h, 16); ctx.fill();
+
+    ctx.strokeStyle = b.active ? '#8ef08e' : '#4e7a5a';
+    ctx.lineWidth = 2.5;
+    rr(b.x + 1, b.y + 1 + press, b.w - 2, b.h - 2, 15); ctx.stroke();
+
+    ctx.translate(cx, cy + press);
+    ctx.fillStyle = b.active ? '#c6ffc6' : '#8fd89a';
+    ctx.beginPath();
+    const s = 20;
+    if (dir < 0) {
+      ctx.moveTo(-s * 0.7, 0);
+      ctx.lineTo(s * 0.5, -s * 0.75);
+      ctx.lineTo(s * 0.5,  s * 0.75);
+    } else {
+      ctx.moveTo(s * 0.7, 0);
+      ctx.lineTo(-s * 0.5, -s * 0.75);
+      ctx.lineTo(-s * 0.5,  s * 0.75);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawExitButton() {
+    const r = btnExitRect;
+    ctx.fillStyle = 'rgba(60, 24, 24, 0.92)';
+    rr(r.x, r.y, r.w, r.h, 8); ctx.fill();
+    ctx.strokeStyle = '#8a4444';
+    ctx.lineWidth = 1.5;
+    rr(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 7); ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.direction = 'rtl';
+    ctx.fillStyle = '#ffaaaa';
+    ctx.font = 'bold 14px Tahoma, system-ui, sans-serif';
+    ctx.fillText('خروج', r.x + r.w / 2, r.y + r.h / 2 + 1);
+  }
+
+  function drawHUD() {
+    // نوار بالا
+    ctx.fillStyle = 'rgba(6,12,8,0.82)';
+    ctx.fillRect(0, 0, W, 58);
+
+    // دکمه خروج (سمت چپ بصری)
+    drawExitButton();
+
+    // نام (وسط)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.direction = 'rtl';
+    ctx.fillStyle = '#cfe8d6';
+    ctx.font = 'bold 14px Tahoma, system-ui, sans-serif';
+    ctx.fillText(currentUser || '', W / 2, 20);
+
+    // رکورد (وسط زیر نام)
+    const pb = currentUser && users[currentUser] ? (users[currentUser].best || 0) : 0;
+    ctx.fillStyle = '#f2e46b';
+    ctx.font = 'bold 13px Tahoma, system-ui, sans-serif';
+    ctx.fillText('رکورد: ' + pb, W / 2, 41);
+
+    // امتیاز (راست)
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#6f9a7c';
+    ctx.font = 'bold 10px Tahoma, system-ui, sans-serif';
+    ctx.fillText('امتیاز', W - 14, 13);
+
+    ctx.fillStyle = '#8ef08e';
+    ctx.font = 'bold 26px Tahoma, system-ui, sans-serif';
+    ctx.fillText(String(Math.floor(score)), W - 14, 39);
+
+    // پیام کوتاه
+    if (flashTime > 0) {
+      ctx.globalAlpha = Math.min(1, flashTime / 0.6);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f2e46b';
+      ctx.font = 'bold 16px Tahoma, system-ui, sans-serif';
+      ctx.fillText(flashMsg, W / 2, 82);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function render() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (shake > 0.5) {
+      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    }
+
+    drawScene();
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (state === 'playing') {
+      drawHUD();
+      drawButton(btnLeft, -1);
+      drawButton(btnRight, 1);
+    }
+  }
+
+  /* ============================================================
+     حلقه بازی
+     ============================================================ */
+  let lastTime = 0;
+  function loop(t) {
+    const dt = lastTime ? Math.min((t - lastTime) / 1000, 0.05) : 0;
+    lastTime = t;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  /* ============================================================
+     شروع
+     ============================================================ */
+  refreshUserList();
+  showLogin();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
